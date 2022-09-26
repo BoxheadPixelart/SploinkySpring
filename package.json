@@ -1,0 +1,27 @@
+{
+  "name": "com.Storm.SploinkySpring",
+  "displayName": "Sploinky Sprink",
+  "version": "0.0.1",
+  "unity": "2021.3",
+  "description": "A collection of classes designed to make your game hit that yoinky sploinky",
+  "keywords": [
+    "unity",
+	"unity3d",
+	"Numeric Springing",
+    "Storm",
+    "utility"
+  ],
+  "homepage": "https://github.com/{{COMPANY}}/{{REPOSITORY_NAME}}.git",
+  "bugs": {
+    "url": "no"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BoxheadPixelart/SploinkySpring.git"
+  },
+  "license": "CC0 Creative Commons",
+  "author": "Storm Hughes",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
