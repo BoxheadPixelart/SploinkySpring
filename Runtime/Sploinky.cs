@@ -1,25 +1,23 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Cinemachine.Utility;
-using NaughtyAttributes;
 using UnityEngine;
 
-namespace Storm.Utils
+namespace Storm.SploinkySpring
 {
 
-    public class Numeric_Springing
+    public class Sploinky
     {
         public class FloatSpring
         {
             public float value;
-            public float velo;
+            public float velocity;
         }
         [System.Serializable]
         public class Vector3Spring
         {
             public Vector3 value;
-            public Vector3 velo;
+            public Vector3 velocity;
             public float damp;
             public float speed;
             public float freq;
@@ -30,14 +28,14 @@ namespace Storm.Utils
             {
                 get
                 {
-                    return value + velo;
+                    return value + velocity;
                 }
             }
 
             public Vector3Spring(float d, float f, float s)
             {
                 value = new Vector3();
-                velo = new Vector3();
+                velocity = new Vector3();
                 //
                 damp = d;
                 freq = f;
@@ -48,9 +46,9 @@ namespace Storm.Utils
             }
             public Vector3Spring Spring(Vector3 goalVector)
             {
-                Vector3[] result = Spring_Vector3(value, velo, goalVector, damp, freq, speed);
+                Vector3[] result = Spring_Vector3(value, velocity, goalVector, damp, freq, speed);
                 value = result[0];
-                velo = result[1];
+                velocity = result[1];
                 return this;
             }
         }
@@ -115,46 +113,7 @@ namespace Storm.Utils
             _ret[1] = (_delta_v / _delta) / (120 / time_step); //Output velocity
             return _ret;
         }
-
-        [System.Serializable]
-        public class SecondOrderDynamics
-        {
-            private Vector3 xp; // previous input
-            private Vector3 y, yd; // state variables
-            public float k1, k2, k3;
-            private float T_crit;// dynamics constants
-            public SecondOrderDynamics(float f, float z, float r, Vector3 x0)
-            {
-                // compute constants
-                k1 = z / (Mathf.PI * f);
-                k2 = 1 / ((2 * Mathf.PI * f) * (2 * Mathf.PI * f));
-                k3 = r * z / (2 * Mathf.PI * f);
-                T_crit = 0.8f * (Mathf.Sqrt(4 * k2 + k1 * k1) - k1); 
-             // initialize variables
-                xp = x0;
-                y = x0;
-                yd = Vector3.zero;
-            }
-            public Vector3 Update(float T, Vector3 x,Vector3 xd)
-            {
-                if (xd.Equals(Vector3.zero))
-                {
-                    // estimate velocity
-                    xd = (x - xp) / T;
-                    xp = x;
-                }
-                int iterations = Mathf.CeilToInt(T / T_crit);
-                T = T / iterations;
-                for (int i = 0; i < iterations; i++)
-                {
-                    y = y + T * yd; // integrate position by velocity
-                    yd = yd + T * (x + k3 * xd - y - k1 * yd) / k2; // integrate velocity by acceleration
-                }
-                return y;
-            }
-        }
-    
-
+        
         //
         public static float Spring_Float(float value, ref float velocity, float target_value, float damping_ratio, float angular_frequency, float time_step)
         {
