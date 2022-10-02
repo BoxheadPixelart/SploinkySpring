@@ -1,52 +1,91 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using CodiceApp;
 using UnityEngine;
 
 namespace Storm.SploinkySpring
 {
+    
+    [System.Serializable]
+    public class SpringData 
+    {
+        [Min(0)]
+        public float damp = 1;
+        [Min(0)]
+        public float speed = 1;
+        [Min(0)]
+        public float freq = 1;
+        public SpringData(float d, float f, float s)
+        {
+            damp = d;
+            freq = f;
+            speed = s;
+        }
 
+        public void SetData(float d, float s, float f)
+        {
+            damp = d;
+            speed = s;
+            freq = f; 
+        }
+
+       
+    }
+    
     public class Sploinky
     {
-        public class FloatSpring
+        
+        public class SpringBase
+        {
+            public SpringData SpringData = new SpringData(1,1,1);
+            public void SetSpringData(SpringData data)
+            {
+                SpringData = data; 
+            }
+            public SpringData GetSpringData()
+            {
+                return SpringData; 
+            }
+            
+        }
+        
+        
+        
+        public class FloatSpring : SpringBase
         {
             public float value;
             public float velocity;
+            //
+            public float Output => value + velocity;
+            public FloatSpring()
+            {
+                value = 0;
+                velocity = 0;
+                //
+                //
+                //
+            }
         }
+        
+        
         [System.Serializable]
-        public class Vector3Spring
+        public class Vector3Spring : SpringBase
         {
             public Vector3 value;
             public Vector3 velocity;
-            public float damp;
-            public float speed;
-            public float freq;
+            public Vector3 Output => value + velocity;
 
-
-
-            public Vector3 output
-            {
-                get
-                {
-                    return value + velocity;
-                }
-            }
-
-            public Vector3Spring(float d, float f, float s)
+            public Vector3Spring()
             {
                 value = new Vector3();
                 velocity = new Vector3();
-                //
-                damp = d;
-                freq = f;
-                speed = s;
-
-
-                //
+               
+                //SpringData
             }
             public Vector3Spring Spring(Vector3 goalVector)
             {
-                Vector3[] result = Spring_Vector3(value, velocity, goalVector, damp, freq, speed);
+                Vector3[] result = Spring_Vector3(value, velocity, goalVector, SpringData.damp, SpringData.freq, SpringData.speed);
                 value = result[0];
                 velocity = result[1];
                 return this;
@@ -54,44 +93,69 @@ namespace Storm.SploinkySpring
         }
 
         [System.Serializable]
-        public class RotationSpring
+        public class RotationSpring : SpringBase
         {
-            public Vector3 value;
-            public Vector3 velo;
-            public float damp;
-            public float speed;
-            public float freq;
+            public Vector3 uVal;//up
+            public Vector3 uVelo;
+            public Vector3 fVal;//forward
+            public Vector3 fVelo;
+            
+
+            public Vector3 UpOutput => uVal + uVelo;
+
+            public Vector3 ForwardOutput => fVal + fVelo;
+
+            public Quaternion Output => Quaternion.LookRotation(ForwardOutput,UpOutput);
 
 
-
-            public Vector3 output
+            public RotationSpring()
             {
-                get
-                {
-                    return value + velo;
-                }
-            }
-
-            public RotationSpring(float d, float f, float s)
-            {
-                value = new Vector3();
-                velo = new Vector3();
-                //
-                damp = d;
-                freq = f;
-                speed = s;
+                uVal = new Vector3();
+                uVelo = new Vector3();
+                fVal = new Vector3();
+                fVelo = new Vector3();
 
 
                 //
             }
-            public RotationSpring Spring(Vector3 goalVector)
+            public RotationSpring Spring(Transform transform)
             {
-                Vector3[] result = Spring_Rotation(value, velo, goalVector, damp, freq, speed);
-                value = result[0];
-                velo = result[1];
+                Vector3 targetForward = transform.forward; 
+                Vector3 targetUp = transform.up;
+                Vector3[] forward = Spring_Vector3(fVal, fVelo, targetForward, SpringData.damp, SpringData.freq, SpringData.speed);
+                fVal = forward[0];
+                fVelo = forward[1];
+                
+                Vector3[] up = Spring_Vector3(uVal, uVelo, targetUp, SpringData.damp, SpringData.freq, SpringData.speed);
+                uVal = up[0];
+                uVelo = up[1];
                 return this;
             }
         }
+        [System.Serializable]
+        public class TransformSpring
+        {
+            public Vector3Spring position;
+            public Vector3Spring scale;
+            public RotationSpring rotation;
+
+            public TransformSpring()
+            {
+                position = new Vector3Spring();
+                scale = new Vector3Spring();
+                rotation = new RotationSpring();
+            }
+
+            public TransformSpring Spring(Transform transform)
+            {
+                position.Spring(transform.position);
+                rotation.Spring(transform);
+                scale.Spring(transform.localScale);
+                return this; 
+            }
+        }
+        
+        
         public static float[] Spring_Float(float value, float velocity, float target_value, float damping_ratio, float angular_frequency, float time_step)
         {
             //Math from: http://allenchou.net/2015/04/game-math-more-on-numeric-springing/ and http://allenchou.net/2015/04/game-math-precise-control-over-numeric-springing/
@@ -173,27 +237,7 @@ namespace Storm.SploinkySpring
             velocity = new Vector3(x[1], y[1], z[1]);
             return _ret;
         }
-        public static Vector3[] Spring_Rotation(Vector3 value, Vector3 velocity, Vector3 target_value, float damping_ratio, float angular_frequency, float time_step)
-        {
-            float xRotDiff;
-            float yRotDiff;
-            float zRotDiff;
-            Vector3[] _ret = { new Vector3(0, 0, 0), new Vector3(0, 0, 0) };
-            //
-            xRotDiff = value.x - Mathf.DeltaAngle(target_value.x, value.x);
-            float[] xrot = Spring_Float(value.x, velocity.x, xRotDiff, damping_ratio, angular_frequency, time_step);
-            //
-            yRotDiff = value.y - Mathf.DeltaAngle(target_value.y, value.y);
-            float[] yrot = Spring_Float(value.y, velocity.y, yRotDiff, damping_ratio, angular_frequency, time_step);
-            //
-            zRotDiff = value.z - Mathf.DeltaAngle(target_value.z, value.z);
-            float[] zrot = Spring_Float(value.z, velocity.z, zRotDiff, damping_ratio, angular_frequency, time_step);
-            //
-            _ret[0] = new Vector3(xrot[0], yrot[0], zrot[0]);
-            _ret[1] = new Vector3(xrot[1], yrot[1], zrot[1]);
-            //
-            return _ret;
-        }
+       
         //  public static float[] Spring_RotationAngle(Vector3 value, Vector3 velocity, Vector3 target_value, float damping_ratio, float angular_frequency, float time_step)
         //  {
         //  float RotDiff;
@@ -210,6 +254,63 @@ namespace Storm.SploinkySpring
         //
 
         //
+        public static Vector3[] Spring_RotationDirection(Vector3 value, Vector3 velocity, Vector3 target_value, float damping_ratio, float angular_frequency, float time_step)
+        {
+            Vector3[] ret = { new Vector3(0, 0, 0), new Vector3(0, 0, 0) };
+            //
+            var xRotDiff = value.x - Mathf.DeltaAngle(target_value.x, value.x);
+            float[] xrot = Spring_Float(value.x, velocity.x, xRotDiff, damping_ratio, angular_frequency, time_step);
+            //
+            var yRotDiff = value.y - Mathf.DeltaAngle(target_value.y, value.y);
+            float[] yrot = Spring_Float(value.y, velocity.y, yRotDiff, damping_ratio, angular_frequency, time_step);
+            //
+            var zRotDiff = value.z - Mathf.DeltaAngle(target_value.z, value.z);
+            float[] zrot = Spring_Float(value.z, velocity.z, zRotDiff, damping_ratio, angular_frequency, time_step);
+            //
+            ret[0] = new Vector3(xrot[0], yrot[0], zrot[0]);
+            ret[1] = new Vector3(xrot[1], yrot[1], zrot[1]);
+            //
+            return ret;
+        }
+        
+        
+        
+        public static Quaternion ShortestRotation(Quaternion a, Quaternion b)
+        {
+            if (Quaternion.Dot(a, b) < 0)
+            {
+                return a * Quaternion.Inverse(Multiply(b, -1));
+            }
+            else return a * Quaternion.Inverse(b);
+        }
 
+
+
+        public static Quaternion Multiply(Quaternion input, float scalar) 
+        {
+            return new Quaternion(input.x * scalar, input.y * scalar, input.z * scalar, input.w * scalar);
+        }
+        
+        
     }
+    
+    
+    //  public static float[] Spring_RotationAngle(Vector3 value, Vector3 velocity, Vector3 target_value, float damping_ratio, float angular_frequency, float time_step)
+    //  {
+    //  float RotDiff;
+    // float[] _ret = {0,0}; 
+    // return _ret;
+    // }
+    // public static Transform[] Spring_Transform(Vector3 value, Vector3 velocity, Vector3 target_value, float damping_ratio, float angular_frequency, float time_step)
+    // {
+    //Transform
+    //return _ret; 
+    //  }
+    //
+
+    //
+
+    //
+
 }
+

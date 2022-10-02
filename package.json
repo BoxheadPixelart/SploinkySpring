@@ -2,12 +2,14 @@
   "name": "com.storm.sploinkyspring",
   "version": "1.0.0",
   "displayName": "Sploinky Spring",
-  "description": "",
+  "description": "A Collection of Classes intended to make your game hit that yoinky sploinky.",
   "unity": "2019.2",
-  "dependencies": {
-    
-  },
-  "keywords": ["tools","extensions","spring","storm"],
+  "keywords": [
+    "tools",
+    "extensions",
+    "spring",
+    "storm"
+  ],
   "author": {
     "name": "Storm Hughes",
     "email": "storm.hughes8@gmail.com",
