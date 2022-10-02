@@ -135,23 +135,35 @@ namespace Storm.SploinkySpring
         [System.Serializable]
         public class TransformSpring
         {
+            public bool[] active = new bool[3];  
             public Vector3Spring position;
             public Vector3Spring scale;
             public RotationSpring rotation;
 
             public TransformSpring()
             {
+                active[0] = true;
+                active[1] = true;
+                active[2] = true; 
                 position = new Vector3Spring();
                 scale = new Vector3Spring();
                 rotation = new RotationSpring();
             }
 
-            public TransformSpring Spring(Transform transform)
+            public TransformSpring Spring(Transform transform, Vector3 forwardoffset)
             {
-                position.Spring(transform.position);
-                rotation.Spring(transform);
-                scale.Spring(transform.localScale);
-                return this; 
+                if (active[0]) position.Spring(transform.position +( transform.forward * forwardoffset.z)  + (transform.up * forwardoffset.y)+transform.right * forwardoffset.x);
+                if (active[1]) rotation.Spring(transform);
+                if (active[2]) scale.Spring(transform.localScale);
+
+                return this;
+            }
+
+            public void SetSpringData(SpringData pos,SpringData rot, SpringData sca)
+            {
+                position.SetSpringData(pos);
+                rotation.SetSpringData(rot);
+                scale.SetSpringData(sca);
             }
         }
         
