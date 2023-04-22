@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using CodiceApp;
 using UnityEngine;
 
 namespace Storm.SploinkySpring
@@ -51,7 +50,8 @@ namespace Storm.SploinkySpring
         }
         
         
-        
+           
+        [System.Serializable]
         public class FloatSpring : SpringBase
         {
             public float value;
@@ -62,10 +62,17 @@ namespace Storm.SploinkySpring
             {
                 value = 0;
                 velocity = 0;
-                //
-                //
-                //
+      
             }
+            
+            public FloatSpring Spring(float goalFloat)
+            {
+                float[] result = Spring_Float(value, velocity, goalFloat, SpringData.damp, SpringData.freq, SpringData.speed);
+                value = result[0];
+                velocity = result[1];
+                return this;
+            }
+            
         }
         
         
